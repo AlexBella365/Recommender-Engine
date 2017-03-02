@@ -26,6 +26,6 @@ if __name__ == '__main__':
     global recommendation_engine
     global database
     database = './data/RecommenderSystem.db'
-    connector = sqlite3.connect(database,check_same_thread=False)
-    recommendation_engine = MovieRecommender(connector)
+    sqlconnector = sqlite3.connect(database,check_same_thread=False)
+    recommendation_engine = MovieRecommender(sqlconnector)
     app.run(debug=True)

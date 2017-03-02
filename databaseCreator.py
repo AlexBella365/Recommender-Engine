@@ -33,7 +33,7 @@ ratings_source = './data/ml-20m/ratings.csv'
 df_all = pd.read_csv(ratings_source)
 
 # For testing, take a  lighter database
-df = df_all.sample(frac=0.01,random_state=0)  
+df = df_all.sample(n=int(1e6),random_state=0)  
 Nu = df.userId.unique().shape[0]
 Nm = df.movieId.unique().shape[0]
 print ('Number of users = ' + str(Nu) + ' | Number of movies = ' + str(Nm))
@@ -84,6 +84,8 @@ sqlConnector.execute('''CREATE VIEW  UsersScores AS
 sqlConnector.commit()
 
 #%% Create the Recommendations table
+from math import ceil
+
 try:
     sqlConnector.execute("DROP TABLE Recommendations")
 except:
@@ -103,16 +105,21 @@ rec = MovieRecommender(sqlConnector)
 listUsers = rec.listUsers
 
 count = 0
+batch = 1
+sizeBatch = int(1e4)
 for user in listUsers:
     #value = (user,str(rec.predictInterest(user)))
     #sqlConnector.execute('''INSERT INTO Recommendations (userId,recommendation,updated)
     #                    VALUES (?,?,1)''',value)
     rec.updateRecommendation(user,forceCommit=False)
     count +=1 
-    if count>1000:
+    if count>=sizeBatch:
+        print('#### Batch {:} of {:}'.format(batch,ceil(Nu/sizeBatch)))
         sqlConnector.commit()
         count = 0
+        batch +=1
 sqlConnector.commit()
+print('====> Batch {:} of {:}'.format(batch,ceil(Nu/sizeBatch)))
 
 #%% Make sure to save everything and close the connection
 sqlConnector.commit()
